@@ -4,29 +4,29 @@ using UnityEngine.EventSystems;
 
 namespace Utility
 {
-    public static class ButtonExtention
+    public static class ButtonFunctionExpansion
     {
-        public static void OnPointerDown(this Button button, Action onClickAction)
+        public static void OnPointerDown(this Button button, Action onPointerDownAction)
         {
-            AddEventTriggerEntry(button, onClickAction, EventTriggerType.PointerDown);
+            SetEventTrigger(button, onPointerDownAction, EventTriggerType.PointerDown);
         }
 
-        public static void OnPointerEnter(this Button button, Action onEnterAction)
+        public static void OnPointerEnter(this Button button, Action onPointerEnterAction)
         {
-            AddEventTriggerEntry(button, onEnterAction, EventTriggerType.PointerEnter);
+            SetEventTrigger(button, onPointerEnterAction, EventTriggerType.PointerEnter);
         }
 
-        public static void OnPointerExit(this Button button, Action onExitAction)
+        public static void OnPointerExit(this Button button, Action onPointerExitAction)
         {
-            AddEventTriggerEntry(button, onExitAction, EventTriggerType.PointerExit);
+            SetEventTrigger(button, onPointerExitAction, EventTriggerType.PointerExit);
         }
 
-        private static void AddEventTriggerEntry(Button button, Action action, EventTriggerType type)
+        private static void SetEventTrigger(Button button, Action action, EventTriggerType eventTriggerType)
         {
-            var entry = new EventTrigger.Entry { eventID = type };
-            entry.callback.AddListener(_ => { action();});
-            var trigger = button.gameObject.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
-            trigger.triggers.Add(entry);
+            var eventTriggerEntry = new EventTrigger.Entry { eventID = eventTriggerType };
+            eventTriggerEntry.callback.AddListener(_ => action());
+            var eventTrigger = button.gameObject.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+            eventTrigger.triggers.Add(eventTriggerEntry);
         }
     }
 }
