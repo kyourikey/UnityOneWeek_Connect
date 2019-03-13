@@ -12,11 +12,6 @@ namespace Utility
             Instance = this;
         }
 
-        void Start()
-        {
-            Debug.Log(SceneManager.sceneCountInBuildSettings);
-        }
-
         public void LoadNextScene()
         {
             var nowSceneBuildIndex = SceneManager.GetActiveScene().buildIndex;
