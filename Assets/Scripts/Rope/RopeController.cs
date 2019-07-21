@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,26 +11,27 @@ public class RopeController : MonoBehaviour
     {
         GUILayout.TextArea("Game Turn : " + _turn);
 
-        if (_turn == GameTurn.Create)
+        if (_turn == RopeState.Create)
         {
-            GUILayout.TextArea("Next Rope Type : " + _ropeManager.NextRopeType);
+            GUILayout.TextArea("Wait for create.");
         }
-        else if (_turn == GameTurn.Climb)
+        else if (_turn == RopeState.Climb)
         {
             GUILayout.TextArea("Next Rope Type : " + _ropeManager.Ropes[_playerManager.NowPosition - 1].RopeType);
         }
-        
     }
-
-
 
     [SerializeField]
     private RopeManager _ropeManager;
     [SerializeField]
     private PlayerManager _playerManager;
+    [SerializeField]
+    private HelpedHumanCreater _helpedHumanCreater;
+    [SerializeField]
+    private RopeClimbers _ropeClimbers;
 
-    private GameTurn _turn = GameTurn.Create;
-    
+    private RopeState _turn = RopeState.Create;
+
     private int _nowRopeLength
     {
         get { return _ropeManager.Ropes.Count; }
@@ -37,6 +40,8 @@ public class RopeController : MonoBehaviour
     void Awake()
     {
         _ropeManager.ChangeNextRopeType();
+        ChangeRopeState(RopeState.Create);
+
     }
 
     void OnEnable()
@@ -55,10 +60,18 @@ public class RopeController : MonoBehaviour
 
     void Update()
     {
-        for (var i = 0; i < _ropeManager.Ropes.Count; i++)
+        if (_nowRopeLength <= 0)
+            return;
+        
+        for (var i = 0; i < _nowRopeLength; i++)
         {
             var rope = _ropeManager.Ropes[i];
-            rope.gameObject.transform.position = -Vector3.up*i;
+
+            var hash = iTween.Hash("position", -Vector3.up * i,
+                "time", 1.0f);
+            iTween.MoveUpdate(rope.gameObject, hash);
+
+            rope.gameObject.transform.rotation = Quaternion.identity;
         }
     }
 
@@ -100,36 +113,27 @@ public class RopeController : MonoBehaviour
 
     private void Success()
     {
-        if (_turn == GameTurn.Create)
-        {
-            _ropeManager.CreateRopeFirst(_ropeManager.NextRopeType);
-            _ropeManager.ChangeNextRopeType();
-            
-            if (_nowRopeLength >= _playerManager.StartPosition)
-            {
-                _turn = GameTurn.Climb;
-            }
-        }
-        else if (_turn == GameTurn.Climb)
+        if (_turn == RopeState.Climb)
         {
             _playerManager.NowPosition -= 1;
+            if (_playerManager.NowPosition <= 0)
+                _playerManager.NowPosition = 0;
+
+            _ropeManager.DeleteFirstRope();
 
             if (_playerManager.NowPosition <= 0)
             {
-                _turn = GameTurn.Create;
-                _ropeManager.ResetRopes();
+                _helpedHumanCreater.Create();
+                _ropeClimbers.Next();
                 _playerManager.ResetPosition();
+                ChangeRopeState(RopeState.Create);
             }
         }
     }
 
     private void Failure()
     {
-        if (_turn == GameTurn.Create)
-        {
-            Debug.Log("Create Fail");
-        }
-        else if (_turn == GameTurn.Climb)
+        if (_turn == RopeState.Climb)
         {
             Debug.Log("Climb Fail");
         }
@@ -137,15 +141,46 @@ public class RopeController : MonoBehaviour
 
     private bool EqualNextRope(RopeType ropeType)
     {
-        if (_turn == GameTurn.Create)
+        if (_turn == RopeState.Create)
         {
-            return ropeType == _ropeManager.NextRopeType;
+            return ropeType == _ropeManager.NextCreateRopeType;
         }
-        else if (_turn == GameTurn.Climb)
+        else if (_turn == RopeState.Climb)
         {
-            return _ropeManager.Ropes[_playerManager.NowPosition - 1].RopeType == ropeType;
+            return _ropeManager.Ropes.First().RopeType == ropeType;
         }
 
         return false;
+    }
+
+    private void ChangeRopeState(RopeState ropeState)
+    {
+        _turn = ropeState;
+
+        if (ropeState == RopeState.Create)
+        {
+            _ropeManager.ResetRopes();
+            StartCoroutine("CreateRopesCoroutine", 10);
+        }
+        else if (ropeState == RopeState.Climb)
+        {
+
+        }
+    }
+
+    private IEnumerator CreateRopesCoroutine(int ropeLength)
+    {
+        for (var i = 0; i < ropeLength; i++)
+        {
+            if (_turn == RopeState.Create)
+            {
+                _ropeManager.CreateRopeFirst(_ropeManager.NextCreateRopeType);
+                _ropeManager.ChangeNextRopeType();
+            }
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        ChangeRopeState(RopeState.Climb);
     }
 }

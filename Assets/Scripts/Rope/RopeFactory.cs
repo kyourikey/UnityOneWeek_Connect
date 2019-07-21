@@ -24,6 +24,14 @@ public class RopeFactory
         rope = SetupRope(rope, ropeType);
         return rope;
     }
+    
+    public Rope Create(RopeType ropeType, Vector3 position, Quaternion rotation)
+    {
+        var rope = Create(ropeType);
+        rope.transform.SetPositionAndRotation(position, rotation);
+        return rope;
+    }
+
     private Rope GetRopeByType(RopeType ropeType)
     {
         Rope rope = null;

@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements.GraphView;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class RopeManager : MonoBehaviour
 {
     public List<Rope> Ropes = new List<Rope>();
-    private RopeType _nextRopeType = RopeType.Red;
-    public RopeType NextRopeType
+    private RopeType _nextCreateRopeType = RopeType.Red;
+    public RopeType NextCreateRopeType
     {
-        get { return _nextRopeType; }
+        get { return _nextCreateRopeType; }
     }
     
     private RopeFactory _ropeFactory;
@@ -51,8 +51,21 @@ public class RopeManager : MonoBehaviour
 
     public void DeleteFirstRope()
     {
+        if (Ropes.Count <= 0)
+            return;
+
         var deleteRope = Ropes[0];
         Ropes.RemoveAt(0);
+        Destroy(deleteRope.gameObject);
+    }
+
+    public void DeleteLastRope()
+    {
+        if (Ropes.Count <= 0)
+            return;
+
+        var deleteRope = Ropes[Ropes.Count-1];
+        Ropes.RemoveAt(Ropes.Count-1);
         Destroy(deleteRope.gameObject);
     }
 
@@ -69,6 +82,6 @@ public class RopeManager : MonoBehaviour
     public void ChangeNextRopeType()
     {
         var ropeTypeLength = Enum.GetNames(typeof(RopeType)).Length;
-        _nextRopeType = (RopeType) Random.Range(0, ropeTypeLength);
+        _nextCreateRopeType = (RopeType) Random.Range(0, ropeTypeLength);
     }
 }
